@@ -1,1 +1,1635 @@
 CLIENT_ID: '218824403685-59nhvtfhovl0frpgob2til2hqan1mphm.apps.googleusercontent.com',
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Altitude Exhibits — Job Board</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #E1251B;
+    --red-dark: #b81e15;
+    --red-glow: rgba(225,37,27,0.15);
+    --black: #0a0a0a;
+    --surface: #111111;
+    --surface2: #1a1a1a;
+    --surface3: #222222;
+    --border: #2a2a2a;
+    --border-light: #333333;
+    --text: #f0f0f0;
+    --text-muted: #888;
+    --text-dim: #555;
+    --white: #ffffff;
+    --green: #22c55e;
+    --yellow: #f59e0b;
+    --blue: #3b82f6;
+    --font-display: 'Bebas Neue', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--black);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── LOGIN SCREEN ── */
+  #login-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: var(--black);
+    position: relative;
+    overflow: hidden;
+  }
+
+  #login-screen::before {
+    content: '';
+    position: absolute;
+    top: -200px; left: 50%;
+    transform: translateX(-50%);
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(225,37,27,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .login-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 48px 40px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .login-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--red);
+  }
+
+  .login-logo {
+    font-family: var(--font-display);
+    font-size: 2.4rem;
+    letter-spacing: 0.08em;
+    color: var(--white);
+    margin-bottom: 4px;
+  }
+
+  .login-logo span { color: var(--red); }
+
+  .login-sub {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 40px;
+  }
+
+  .google-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    padding: 14px 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border-light);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+
+  .google-btn:hover {
+    background: var(--surface3);
+    border-color: var(--red);
+    color: var(--white);
+  }
+
+  .google-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+  .login-note {
+    margin-top: 20px;
+    font-size: 0.72rem;
+    color: var(--text-dim);
+  }
+
+  /* ── APP SHELL ── */
+  #app { display: none; flex-direction: column; min-height: 100vh; }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-logo {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    letter-spacing: 0.06em;
+    color: var(--white);
+  }
+
+  .header-logo span { color: var(--red); }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .user-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .user-avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--red);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: white;
+    overflow: hidden;
+  }
+
+  .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+  .btn-signout {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    padding: 5px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-signout:hover { border-color: var(--red); color: var(--red); }
+
+  /* ── NAV TABS ── */
+  nav {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    gap: 0;
+  }
+
+  .nav-tab {
+    padding: 12px 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    user-select: none;
+  }
+
+  .nav-tab:hover { color: var(--text); }
+  .nav-tab.active { color: var(--red); border-bottom-color: var(--red); }
+
+  /* ── MAIN ── */
+  main { flex: 1; padding: 24px; max-width: 1400px; margin: 0 auto; width: 100%; }
+
+  /* ── STATS BAR ── */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 16px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+  }
+
+  .stat-card.red::before { background: var(--red); }
+  .stat-card.green::before { background: var(--green); }
+  .stat-card.yellow::before { background: var(--yellow); }
+  .stat-card.blue::before { background: var(--blue); }
+
+  .stat-label {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 6px;
+  }
+
+  .stat-value {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    color: var(--white);
+    line-height: 1;
+  }
+
+  /* ── TOOLBAR ── */
+  .toolbar {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .search-box {
+    flex: 1;
+    min-width: 200px;
+    position: relative;
+  }
+
+  .search-box input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    padding: 9px 12px 9px 36px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .search-box input:focus { border-color: var(--red); }
+  .search-box input::placeholder { color: var(--text-dim); }
+
+  .search-icon {
+    position: absolute;
+    left: 10px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-dim);
+    width: 16px; height: 16px;
+  }
+
+  select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    padding: 9px 12px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+
+  select:focus { border-color: var(--red); }
+
+  .btn-primary {
+    background: var(--red);
+    border: none;
+    border-radius: 3px;
+    color: white;
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 9px 18px;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-primary:hover { background: var(--red-dark); }
+
+  .btn-secondary {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text-muted);
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    padding: 9px 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-secondary:hover { border-color: var(--red); color: var(--red); }
+
+  /* ── TABLE ── */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.83rem;
+  }
+
+  thead tr {
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  th {
+    padding: 11px 14px;
+    text-align: left;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  th:hover { color: var(--text); }
+
+  th.sorted { color: var(--red); }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+    cursor: pointer;
+  }
+
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+
+  td {
+    padding: 11px 14px;
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  td.project-id {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--red);
+    font-weight: 500;
+  }
+
+  td.client { color: var(--text-muted); font-size: 0.8rem; }
+  td.show { font-weight: 500; }
+
+  /* ── STATUS BADGES ── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 2px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .badge::before {
+    content: '';
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .badge-pending { background: rgba(245,158,11,0.12); color: var(--yellow); }
+  .badge-progress { background: rgba(59,130,246,0.12); color: var(--blue); }
+  .badge-complete { background: rgba(34,197,94,0.12); color: var(--green); }
+  .badge-default { background: var(--surface3); color: var(--text-muted); }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-dim);
+  }
+
+  .empty-state p { font-size: 0.85rem; margin-top: 8px; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+  }
+
+  .modal::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--red);
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .modal-title {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    letter-spacing: 0.05em;
+    color: var(--white);
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 3px;
+    transition: color 0.2s;
+  }
+
+  .modal-close:hover { color: var(--red); }
+
+  .modal-body { padding: 24px; }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .form-group.full { grid-column: 1 / -1; }
+
+  .form-group label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus { border-color: var(--red); }
+
+  .form-group textarea { resize: vertical; min-height: 80px; }
+
+  .modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  /* ── DETAIL PANEL ── */
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .detail-field { display: flex; flex-direction: column; gap: 4px; }
+
+  .detail-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .detail-value {
+    font-size: 0.85rem;
+    color: var(--text);
+  }
+
+  .detail-value.mono {
+    font-family: var(--font-mono);
+    color: var(--red);
+  }
+
+  .detail-section-title {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin: 20px 0 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .task-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .task-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    margin-top: 4px;
+    flex-shrink: 0;
+  }
+
+  .task-info { flex: 1; }
+  .task-desc { font-size: 0.83rem; margin-bottom: 4px; }
+  .task-meta { font-size: 0.72rem; color: var(--text-muted); }
+
+  /* ── STATUS INLINE EDIT ── */
+  .status-select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    cursor: pointer;
+  }
+
+  /* ── LOADING ── */
+  .loading {
+    text-align: center;
+    padding: 60px;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+  }
+
+  .spinner {
+    width: 28px; height: 28px;
+    border: 2px solid var(--border);
+    border-top-color: var(--red);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin: 0 auto 12px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--green);
+    border-radius: 3px;
+    padding: 12px 18px;
+    font-size: 0.83rem;
+    color: var(--text);
+    z-index: 300;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s;
+    max-width: 320px;
+  }
+
+  #toast.show { transform: translateY(0); opacity: 1; }
+  #toast.error { border-left-color: var(--red); }
+
+  /* ── REFRESH BTN ── */
+  .spinning { animation: spin 0.7s linear infinite; }
+
+  /* ── TASKS TAB ── */
+  .task-row { cursor: default; }
+
+  .priority-high { color: var(--red); font-weight: 600; font-size: 0.72rem; }
+  .priority-moderate { color: var(--yellow); font-weight: 600; font-size: 0.72rem; }
+  .priority-low { color: var(--text-muted); font-size: 0.72rem; }
+
+  /* ── CONTACTS TAB ── */
+  .contacts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+  }
+
+  .contact-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: border-color 0.2s;
+  }
+
+  .contact-card:hover { border-color: var(--red); }
+
+  .contact-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    color: var(--red);
+    flex-shrink: 0;
+  }
+
+  .contact-name { font-weight: 600; font-size: 0.88rem; margin-bottom: 2px; }
+  .contact-role { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 4px; }
+  .contact-detail { font-size: 0.72rem; color: var(--text-dim); font-family: var(--font-mono); }
+
+  /* ── MOBILE ── */
+  @media (max-width: 768px) {
+    header { padding: 0 16px; }
+    main { padding: 16px; }
+    .stats-bar { grid-template-columns: repeat(2, 1fr); }
+    .toolbar { gap: 8px; }
+    .toolbar select { flex: 1; }
+    nav { overflow-x: auto; }
+    .nav-tab { padding: 10px 14px; font-size: 0.72rem; white-space: nowrap; }
+    .form-grid { grid-template-columns: 1fr; }
+    .detail-grid { grid-template-columns: 1fr; }
+    .contacts-grid { grid-template-columns: 1fr; }
+    .header-logo { font-size: 1.2rem; }
+    .user-badge span { display: none; }
+  }
+
+  @media (max-width: 480px) {
+    .stats-bar { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .stat-value { font-size: 1.6rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── LOGIN SCREEN ── -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">ALTITUDE<span>.</span></div>
+    <div class="login-sub">Exhibits · Job Board</div>
+    <button class="google-btn" onclick="signIn()">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+      Sign in with Google
+    </button>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div id="app">
+  <header>
+    <div class="header-logo">ALTITUDE<span>.</span></div>
+    <div class="header-right">
+      <div class="user-badge">
+        <div class="user-avatar" id="user-avatar">SW</div>
+        <span id="user-name">Loading...</span>
+      </div>
+      <button class="btn-signout" onclick="signOut()">Sign Out</button>
+    </div>
+  </header>
+
+  <nav>
+    <div class="nav-tab active" onclick="switchTab('preps')">PREPS</div>
+    <div class="nav-tab" onclick="switchTab('tasks')">Tasks</div>
+    <div class="nav-tab" onclick="switchTab('contacts')">Contacts</div>
+  </nav>
+
+  <main>
+    <!-- PREPS TAB -->
+    <div id="tab-preps">
+      <div class="stats-bar">
+        <div class="stat-card red">
+          <div class="stat-label">Total Jobs</div>
+          <div class="stat-value" id="stat-total">—</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-label">In Progress</div>
+          <div class="stat-value" id="stat-progress">—</div>
+        </div>
+        <div class="stat-card yellow">
+          <div class="stat-label">Pending</div>
+          <div class="stat-value" id="stat-pending">—</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-label">Complete</div>
+          <div class="stat-value" id="stat-complete">—</div>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="search-box">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input type="text" id="search-input" placeholder="Search jobs, clients, shows..." oninput="filterPreps()">
+        </div>
+        <select id="filter-status" onchange="filterPreps()">
+          <option value="">All Statuses</option>
+          <option>Pending</option>
+          <option>In Progress</option>
+          <option>Complete</option>
+        </select>
+        <select id="filter-pm" onchange="filterPreps()">
+          <option value="">All PMs</option>
+        </select>
+        <select id="filter-city" onchange="filterPreps()">
+          <option value="">All Cities</option>
+        </select>
+        <button class="btn-secondary" onclick="refreshData()" id="refresh-btn">
+          <svg id="refresh-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+            <path d="M3 3v5h5"/>
+          </svg>
+          Refresh
+        </button>
+        <button class="btn-primary" onclick="openAddModal()">
+          + Add Job
+        </button>
+      </div>
+
+      <div class="table-wrap">
+        <div id="preps-loading" class="loading">
+          <div class="spinner"></div>
+          Loading jobs...
+        </div>
+        <table id="preps-table" style="display:none">
+          <thead>
+            <tr>
+              <th onclick="sortBy('projectId')">Job #</th>
+              <th onclick="sortBy('status')">Status</th>
+              <th onclick="sortBy('client')">Client</th>
+              <th onclick="sortBy('showName')">Show</th>
+              <th onclick="sortBy('exhibitorName')">Exhibitor</th>
+              <th onclick="sortBy('city')">City</th>
+              <th onclick="sortBy('pm')">PM</th>
+              <th onclick="sortBy('prepStart')">Prep Start</th>
+              <th onclick="sortBy('shipAdv')">Ship Adv.</th>
+              <th>Notes</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="preps-tbody"></tbody>
+        </table>
+        <div id="preps-empty" class="empty-state" style="display:none">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3">
+            <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+          <p>No jobs match your filters.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TASKS TAB -->
+    <div id="tab-tasks" style="display:none">
+      <div class="toolbar">
+        <div class="search-box">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input type="text" id="task-search" placeholder="Search tasks..." oninput="filterTasks()">
+        </div>
+        <select id="filter-task-status" onchange="filterTasks()">
+          <option value="">All Statuses</option>
+          <option>In Progress</option>
+          <option>Completed</option>
+        </select>
+        <select id="filter-task-priority" onchange="filterTasks()">
+          <option value="">All Priorities</option>
+          <option>HIGH</option>
+          <option>MODERATE</option>
+          <option>LOW</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <div id="tasks-loading" class="loading">
+          <div class="spinner"></div>
+          Loading tasks...
+        </div>
+        <table id="tasks-table" style="display:none">
+          <thead>
+            <tr>
+              <th>Task ID</th>
+              <th>Project</th>
+              <th>Description</th>
+              <th>Assigned To</th>
+              <th>Due By</th>
+              <th>Priority</th>
+              <th>Status</th>
+              <th>Category</th>
+            </tr>
+          </thead>
+          <tbody id="tasks-tbody"></tbody>
+        </table>
+        <div id="tasks-empty" class="empty-state" style="display:none">
+          <p>No tasks found.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTACTS TAB -->
+    <div id="tab-contacts" style="display:none">
+      <div class="toolbar" style="margin-bottom:20px">
+        <div class="search-box">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input type="text" id="contact-search" placeholder="Search contacts..." oninput="filterContacts()">
+        </div>
+      </div>
+      <div id="contacts-loading" class="loading">
+        <div class="spinner"></div>
+        Loading contacts...
+      </div>
+      <div class="contacts-grid" id="contacts-grid" style="display:none"></div>
+      <div id="contacts-empty" class="empty-state" style="display:none">
+        <p>No contacts found.</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ── ADD JOB MODAL ── -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add New Job</div>
+      <button class="modal-close" onclick="closeModal('add-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Project ID *</label>
+          <input type="text" id="new-project-id" placeholder="e.g. 9999">
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="new-status">
+            <option>Pending</option>
+            <option>In Progress</option>
+            <option>Complete</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Client</label>
+          <input type="text" id="new-client" placeholder="Client name">
+        </div>
+        <div class="form-group">
+          <label>Show Name</label>
+          <input type="text" id="new-show" placeholder="Show / Event name">
+        </div>
+        <div class="form-group">
+          <label>Exhibitor Name</label>
+          <input type="text" id="new-exhibitor" placeholder="Exhibitor">
+        </div>
+        <div class="form-group">
+          <label>City</label>
+          <input type="text" id="new-city" placeholder="e.g. LV, Denver, LA">
+        </div>
+        <div class="form-group">
+          <label>Project Manager</label>
+          <select id="new-pm">
+            <option value="">— Select PM —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Prep Start Date</label>
+          <input type="date" id="new-prep-start">
+        </div>
+        <div class="form-group">
+          <label>Shipping Advanced Deadline</label>
+          <input type="date" id="new-ship-adv">
+        </div>
+        <div class="form-group">
+          <label>Shipping Direct Date</label>
+          <input type="date" id="new-ship-direct">
+        </div>
+        <div class="form-group full">
+          <label>Notes</label>
+          <textarea id="new-notes" placeholder="Any notes..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal('add-modal')">Cancel</button>
+      <button class="btn-primary" onclick="addJob()">Add Job</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── JOB DETAIL MODAL ── -->
+<div class="modal-overlay" id="detail-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="detail-title">Job Detail</div>
+      <button class="modal-close" onclick="closeModal('detail-modal')">✕</button>
+    </div>
+    <div class="modal-body" id="detail-body"></div>
+  </div>
+</div>
+
+<!-- ── TOAST ── -->
+<div id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════════
+// CONFIG — Replace CLIENT_ID with your Google OAuth Client ID
+// ════════════════════════════════════════════════════════
+const CONFIG = {
+  CLIENT_ID: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com',
+  SHEET_ID: '1LRDysDLQmjQkE96vcgsGDM0XEcm2x08IX4x_l6n8y2w',
+  SCOPES: 'https://www.googleapis.com/auth/spreadsheets',
+  SHEETS: {
+    PREPS: 'PREPS',
+    TASKS: 'TASKS',
+    CONTACTS: 'CONTACTS'
+  }
+};
+
+// ════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════
+let state = {
+  token: null,
+  user: null,
+  preps: [],
+  tasks: [],
+  contacts: [],
+  filteredPreps: [],
+  filteredTasks: [],
+  filteredContacts: [],
+  sortKey: 'projectId',
+  sortDir: 1,
+  currentTab: 'preps'
+};
+
+// ════════════════════════════════════════════════════════
+// GOOGLE AUTH
+// ════════════════════════════════════════════════════════
+function signIn() {
+  if (!CONFIG.CLIENT_ID || CONFIG.CLIENT_ID.includes('YOUR_GOOGLE')) {
+    showToast('⚠ Please add your Google Client ID to the CONFIG. See setup guide.', true);
+    return;
+  }
+
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: CONFIG.CLIENT_ID,
+    scope: CONFIG.SCOPES,
+    callback: async (resp) => {
+      if (resp.error) { showToast('Sign-in failed: ' + resp.error, true); return; }
+      state.token = resp.access_token;
+      await fetchUserInfo();
+      showApp();
+      loadAllData();
+    }
+  });
+  client.requestAccessToken();
+}
+
+async function fetchUserInfo() {
+  const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+    headers: { Authorization: 'Bearer ' + state.token }
+  });
+  state.user = await r.json();
+  document.getElementById('user-name').textContent = state.user.name || state.user.email;
+  const av = document.getElementById('user-avatar');
+  if (state.user.picture) {
+    av.innerHTML = `<img src="${state.user.picture}" alt="">`;
+  } else {
+    av.textContent = (state.user.name || 'U')[0].toUpperCase();
+  }
+}
+
+function signOut() {
+  if (state.token) google.accounts.oauth2.revoke(state.token);
+  state.token = null;
+  state.user = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+}
+
+// ════════════════════════════════════════════════════════
+// SHEETS API
+// ════════════════════════════════════════════════════════
+async function sheetsGet(range) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${encodeURIComponent(range)}`;
+  const r = await fetch(url, { headers: { Authorization: 'Bearer ' + state.token } });
+  if (!r.ok) throw new Error(await r.text());
+  const d = await r.json();
+  return d.values || [];
+}
+
+async function sheetsAppend(range, values) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED`;
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + state.token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ values })
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+async function sheetsUpdate(range, values) {
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`;
+  const r = await fetch(url, {
+    method: 'PUT',
+    headers: { Authorization: 'Bearer ' + state.token, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ values })
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+// ════════════════════════════════════════════════════════
+// LOAD DATA
+// ════════════════════════════════════════════════════════
+async function loadAllData() {
+  await Promise.all([loadPreps(), loadTasks(), loadContacts()]);
+}
+
+async function loadPreps() {
+  try {
+    const rows = await sheetsGet('PREPS!A:W');
+    if (rows.length < 2) { state.preps = []; renderPreps(); return; }
+    const headers = rows[0];
+    state.preps = rows.slice(1).map((r, i) => ({
+      _row: i + 2,
+      complete: r[0] || '',
+      projectId: r[1] || '',
+      status: r[2] || '',
+      client: r[3] || '',
+      showName: r[4] || '',
+      exhibitorName: r[5] || '',
+      prepStart: r[6] || '',
+      preview: r[7] || '',
+      shipAdv: r[8] || '',
+      shipDirect: r[9] || '',
+      city: r[10] || '',
+      moveIn: r[11] || '',
+      hallHours: r[12] || '',
+      moveOut: r[13] || '',
+      booth: r[14] || '',
+      notes: r[15] || '',
+      pm: r[16] || '',
+    }));
+
+    // Populate PM filter
+    const pms = [...new Set(state.preps.map(p => p.pm).filter(Boolean))].sort();
+    const pmSel = document.getElementById('filter-pm');
+    pmSel.innerHTML = '<option value="">All PMs</option>' + pms.map(p => `<option>${p}</option>`).join('');
+
+    // Populate PM dropdown in add form
+    const newPm = document.getElementById('new-pm');
+    newPm.innerHTML = '<option value="">— Select PM —</option>' + pms.map(p => `<option>${p}</option>`).join('');
+
+    // Populate City filter
+    const cities = [...new Set(state.preps.map(p => p.city).filter(Boolean))].sort();
+    const citySel = document.getElementById('filter-city');
+    citySel.innerHTML = '<option value="">All Cities</option>' + cities.map(c => `<option>${c}</option>`).join('');
+
+    filterPreps();
+    updateStats();
+  } catch (e) {
+    showToast('Error loading PREPS: ' + e.message, true);
+    document.getElementById('preps-loading').innerHTML = '<p style="color:var(--red)">Failed to load. Check your API key and Sheet permissions.</p>';
+  }
+}
+
+async function loadTasks() {
+  try {
+    const rows = await sheetsGet('TASKS!A:P');
+    if (rows.length < 2) { state.tasks = []; renderTasks(); return; }
+    state.tasks = rows.slice(1).map((r, i) => ({
+      _row: i + 2,
+      projectId: r[0] || '',
+      taskId: r[1] || '',
+      status: r[2] || '',
+      description: r[3] || '',
+      files: r[4] || '',
+      eventCreator: r[5] || '',
+      notes: r[6] || '',
+      dueBy: r[7] || '',
+      photo: r[8] || '',
+      assignedTo: r[9] || '',
+      category: r[10] || '',
+      priority: r[11] || '',
+    }));
+    filterTasks();
+  } catch (e) {
+    showToast('Error loading TASKS: ' + e.message, true);
+  }
+}
+
+async function loadContacts() {
+  try {
+    const rows = await sheetsGet('CONTACTS!A:F');
+    if (rows.length < 2) { state.contacts = []; renderContacts(); return; }
+    state.contacts = rows.slice(1).map(r => ({
+      id: r[0] || '',
+      firstName: r[1] || '',
+      lastName: r[2] || '',
+      position: r[3] || '',
+      phone: r[4] || '',
+      email: r[5] || ''
+    }));
+    filterContacts();
+  } catch (e) {
+    showToast('Error loading CONTACTS: ' + e.message, true);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// REFRESH
+// ════════════════════════════════════════════════════════
+async function refreshData() {
+  const icon = document.getElementById('refresh-icon');
+  icon.classList.add('spinning');
+  await loadAllData();
+  icon.classList.remove('spinning');
+  showToast('Data refreshed');
+}
+
+// ════════════════════════════════════════════════════════
+// STATS
+// ════════════════════════════════════════════════════════
+function updateStats() {
+  const p = state.preps;
+  document.getElementById('stat-total').textContent = p.length;
+  document.getElementById('stat-progress').textContent = p.filter(j => j.status === 'In Progress').length;
+  document.getElementById('stat-pending').textContent = p.filter(j => j.status === 'Pending').length;
+  document.getElementById('stat-complete').textContent = p.filter(j => j.status === 'Complete').length;
+}
+
+// ════════════════════════════════════════════════════════
+// FILTER + SORT
+// ════════════════════════════════════════════════════════
+function filterPreps() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const st = document.getElementById('filter-status').value;
+  const pm = document.getElementById('filter-pm').value;
+  const city = document.getElementById('filter-city').value;
+
+  state.filteredPreps = state.preps.filter(j => {
+    const matchQ = !q || [j.projectId, j.client, j.showName, j.exhibitorName, j.city, j.pm].join(' ').toLowerCase().includes(q);
+    const matchSt = !st || j.status === st;
+    const matchPm = !pm || j.pm === pm;
+    const matchCity = !city || j.city === city;
+    return matchQ && matchSt && matchPm && matchCity;
+  });
+
+  sortPreps();
+  renderPreps();
+}
+
+function sortBy(key) {
+  if (state.sortKey === key) state.sortDir *= -1;
+  else { state.sortKey = key; state.sortDir = 1; }
+  filterPreps();
+}
+
+function sortPreps() {
+  const k = state.sortKey, d = state.sortDir;
+  state.filteredPreps.sort((a, b) => {
+    const av = (a[k] || '').toLowerCase();
+    const bv = (b[k] || '').toLowerCase();
+    return av < bv ? -d : av > bv ? d : 0;
+  });
+}
+
+function filterTasks() {
+  const q = document.getElementById('task-search').value.toLowerCase();
+  const st = document.getElementById('filter-task-status').value;
+  const pr = document.getElementById('filter-task-priority').value;
+
+  state.filteredTasks = state.tasks.filter(t => {
+    const matchQ = !q || [t.projectId, t.taskId, t.description, t.assignedTo].join(' ').toLowerCase().includes(q);
+    const matchSt = !st || t.status === st;
+    const matchPr = !pr || t.priority === pr;
+    return matchQ && matchSt && matchPr;
+  });
+
+  renderTasks();
+}
+
+function filterContacts() {
+  const q = document.getElementById('contact-search').value.toLowerCase();
+  state.filteredContacts = state.contacts.filter(c =>
+    !q || [c.firstName, c.lastName, c.position, c.email].join(' ').toLowerCase().includes(q)
+  );
+  renderContacts();
+}
+
+// ════════════════════════════════════════════════════════
+// RENDER — PREPS
+// ════════════════════════════════════════════════════════
+function statusBadge(s) {
+  const map = { 'Pending': 'badge-pending', 'In Progress': 'badge-progress', 'Complete': 'badge-complete' };
+  return `<span class="badge ${map[s] || 'badge-default'}">${s || '—'}</span>`;
+}
+
+function renderPreps() {
+  const loading = document.getElementById('preps-loading');
+  const table = document.getElementById('preps-table');
+  const empty = document.getElementById('preps-empty');
+  const tbody = document.getElementById('preps-tbody');
+
+  loading.style.display = 'none';
+
+  if (state.filteredPreps.length === 0) {
+    table.style.display = 'none';
+    empty.style.display = 'block';
+    return;
+  }
+
+  empty.style.display = 'none';
+  table.style.display = 'table';
+
+  tbody.innerHTML = state.filteredPreps.map(j => `
+    <tr onclick="openDetail('${j.projectId}')">
+      <td class="project-id">${j.projectId}</td>
+      <td>${statusBadge(j.status)}</td>
+      <td class="client">${j.client || '—'}</td>
+      <td class="show">${j.showName || '—'}</td>
+      <td>${j.exhibitorName || '—'}</td>
+      <td>${j.city || '—'}</td>
+      <td>${j.pm || '—'}</td>
+      <td>${j.prepStart || '—'}</td>
+      <td>${j.shipAdv || '—'}</td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;color:var(--text-muted);font-size:0.78rem">${(j.notes || '').substring(0,60)}${j.notes && j.notes.length > 60 ? '…' : ''}</td>
+      <td onclick="event.stopPropagation()">
+        <select class="status-select" onchange="updateStatus('${j._row}', this.value)">
+          <option ${j.status==='Pending'?'selected':''}>Pending</option>
+          <option ${j.status==='In Progress'?'selected':''}>In Progress</option>
+          <option ${j.status==='Complete'?'selected':''}>Complete</option>
+        </select>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ════════════════════════════════════════════════════════
+// RENDER — TASKS
+// ════════════════════════════════════════════════════════
+function priorityClass(p) {
+  if (p === 'HIGH') return 'priority-high';
+  if (p === 'MODERATE') return 'priority-moderate';
+  return 'priority-low';
+}
+
+function renderTasks() {
+  const loading = document.getElementById('tasks-loading');
+  const table = document.getElementById('tasks-table');
+  const empty = document.getElementById('tasks-empty');
+  const tbody = document.getElementById('tasks-tbody');
+
+  loading.style.display = 'none';
+
+  if (state.filteredTasks.length === 0) {
+    table.style.display = 'none';
+    empty.style.display = 'block';
+    return;
+  }
+
+  empty.style.display = 'none';
+  table.style.display = 'table';
+
+  tbody.innerHTML = state.filteredTasks.map(t => `
+    <tr class="task-row">
+      <td style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted)">${t.taskId || '—'}</td>
+      <td class="project-id">${t.projectId}</td>
+      <td>${t.description || '—'}</td>
+      <td>${t.assignedTo || '—'}</td>
+      <td>${t.dueBy || '—'}</td>
+      <td><span class="${priorityClass(t.priority)}">${t.priority || '—'}</span></td>
+      <td>${statusBadge(t.status)}</td>
+      <td style="color:var(--text-muted);font-size:0.78rem">${t.category || '—'}</td>
+    </tr>
+  `).join('');
+}
+
+// ════════════════════════════════════════════════════════
+// RENDER — CONTACTS
+// ════════════════════════════════════════════════════════
+function renderContacts() {
+  const loading = document.getElementById('contacts-loading');
+  const grid = document.getElementById('contacts-grid');
+  const empty = document.getElementById('contacts-empty');
+
+  loading.style.display = 'none';
+
+  if (state.filteredContacts.length === 0) {
+    grid.style.display = 'none';
+    empty.style.display = 'block';
+    return;
+  }
+
+  empty.style.display = 'none';
+  grid.style.display = 'grid';
+
+  grid.innerHTML = state.filteredContacts.map(c => `
+    <div class="contact-card">
+      <div class="contact-avatar">${(c.firstName[0] || '') + (c.lastName[0] || '')}</div>
+      <div>
+        <div class="contact-name">${c.firstName} ${c.lastName}</div>
+        <div class="contact-role">${c.position}</div>
+        ${c.phone ? `<div class="contact-detail">${c.phone}</div>` : ''}
+        ${c.email ? `<div class="contact-detail">${c.email}</div>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+// ════════════════════════════════════════════════════════
+// JOB DETAIL MODAL
+// ════════════════════════════════════════════════════════
+function openDetail(projectId) {
+  const j = state.preps.find(p => p.projectId === projectId);
+  if (!j) return;
+
+  const relatedTasks = state.tasks.filter(t => t.projectId === projectId);
+
+  document.getElementById('detail-title').textContent = `Job ${j.projectId}`;
+
+  const tasksHtml = relatedTasks.length === 0 ? '<p style="color:var(--text-dim);font-size:0.82rem">No tasks linked to this job.</p>' :
+    relatedTasks.map(t => `
+      <div class="task-item">
+        <div class="task-dot" style="background:${t.status==='Completed'?'var(--green)':'var(--blue)'}"></div>
+        <div class="task-info">
+          <div class="task-desc">${t.description}</div>
+          <div class="task-meta">${t.taskId} · ${t.assignedTo || '—'} · Due: ${t.dueBy || '—'} · <span class="${priorityClass(t.priority)}">${t.priority}</span></div>
+        </div>
+      </div>
+    `).join('');
+
+  document.getElementById('detail-body').innerHTML = `
+    <div class="detail-grid">
+      <div class="detail-field">
+        <div class="detail-label">Project ID</div>
+        <div class="detail-value mono">${j.projectId}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Status</div>
+        <div class="detail-value">${statusBadge(j.status)}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Client</div>
+        <div class="detail-value">${j.client || '—'}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Show Name</div>
+        <div class="detail-value">${j.showName || '—'}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Exhibitor</div>
+        <div class="detail-value">${j.exhibitorName || '—'}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">City</div>
+        <div class="detail-value">${j.city || '—'}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Project Manager</div>
+        <div class="detail-value">${j.pm || '—'}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Booth</div>
+        <div class="detail-value">${j.booth || '—'}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Prep Start</div>
+        <div class="detail-value">${j.prepStart || '—'}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Preview Date</div>
+        <div class="detail-value">${j.preview || '—'}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Ship Advanced</div>
+        <div class="detail-value">${j.shipAdv || '—'}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Ship Direct</div>
+        <div class="detail-value">${j.shipDirect || '—'}</div>
+      </div>
+    </div>
+
+    ${j.notes ? `
+    <div class="detail-section-title">Notes</div>
+    <p style="font-size:0.83rem;color:var(--text-muted);line-height:1.6">${j.notes}</p>
+    ` : ''}
+
+    ${j.moveIn || j.hallHours || j.moveOut ? `
+    <div class="detail-section-title">Show Schedule</div>
+    <div class="detail-grid">
+      <div class="detail-field">
+        <div class="detail-label">Exhibitor Move-In</div>
+        <div class="detail-value" style="white-space:pre-wrap;font-size:0.78rem">${j.moveIn || '—'}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Hall Hours</div>
+        <div class="detail-value" style="white-space:pre-wrap;font-size:0.78rem">${j.hallHours || '—'}</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Move-Out</div>
+        <div class="detail-value" style="white-space:pre-wrap;font-size:0.78rem">${j.moveOut || '—'}</div>
+      </div>
+    </div>
+    ` : ''}
+
+    <div class="detail-section-title">Tasks (${relatedTasks.length})</div>
+    ${tasksHtml}
+  `;
+
+  document.getElementById('detail-modal').classList.add('open');
+}
+
+// ════════════════════════════════════════════════════════
+// ADD JOB
+// ════════════════════════════════════════════════════════
+function openAddModal() {
+  document.getElementById('add-modal').classList.add('open');
+}
+
+async function addJob() {
+  const projectId = document.getElementById('new-project-id').value.trim();
+  if (!projectId) { showToast('Project ID is required', true); return; }
+
+  const row = [
+    'FALSE',
+    projectId,
+    document.getElementById('new-status').value,
+    document.getElementById('new-client').value,
+    document.getElementById('new-show').value,
+    document.getElementById('new-exhibitor').value,
+    document.getElementById('new-prep-start').value,
+    '',
+    document.getElementById('new-ship-adv').value,
+    document.getElementById('new-ship-direct').value,
+    document.getElementById('new-city').value,
+    '', '', '',
+    '',
+    document.getElementById('new-notes').value,
+    document.getElementById('new-pm').value,
+  ];
+
+  try {
+    await sheetsAppend('PREPS!A:Q', [row]);
+    closeModal('add-modal');
+    showToast('Job added successfully');
+    await loadPreps();
+  } catch (e) {
+    showToast('Failed to add job: ' + e.message, true);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// UPDATE STATUS
+// ════════════════════════════════════════════════════════
+async function updateStatus(row, newStatus) {
+  try {
+    await sheetsUpdate(`PREPS!C${row}`, [[newStatus]]);
+    const job = state.preps.find(j => j._row === row);
+    if (job) { job.status = newStatus; updateStats(); }
+    showToast('Status updated to: ' + newStatus);
+  } catch (e) {
+    showToast('Failed to update status: ' + e.message, true);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// UI UTILS
+// ════════════════════════════════════════════════════════
+function switchTab(tab) {
+  state.currentTab = tab;
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  ['preps','tasks','contacts'].forEach(t => {
+    document.getElementById('tab-' + t).style.display = t === tab ? 'block' : 'none';
+  });
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+let toastTimer;
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (isError ? ' error' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = ''; }, 3000);
+}
+</script>
+
+<!-- Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
+</body>
+</html>
