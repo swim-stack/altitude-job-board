@@ -1,0 +1,45 @@
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+config.local.js
+secrets.js
+
+# Credentials & API Keys
+**/credentials.json
+**/client_secret.json
+**/oauth_tokens.json
+*.pem
+*.key
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Node & Dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Build & Dist
+dist/
+build/
+*.min.js
+*.min.css
+
+# Testing
+coverage/
+.nyc_output/
+
+# OS
+Thumbs.db
+.AppleDouble
+.LSOverride
+
+# Logs
+logs/
+*.log
