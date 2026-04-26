@@ -1,5 +1,3 @@
-CLIENT_ID: '218824403685-59nhvtfhovl0frpgob2til2hqan1mphm.apps.googleusercontent.com',
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -998,13 +996,9 @@ CLIENT_ID: '218824403685-59nhvtfhovl0frpgob2til2hqan1mphm.apps.googleusercontent
           <label>Shipping Advanced Deadline</label>
           <input type="date" id="new-ship-adv">
         </div>
-        <div class="form-group">
-          <label>Shipping Direct Date</label>
-          <input type="date" id="new-ship-direct">
-        </div>
         <div class="form-group full">
           <label>Notes</label>
-          <textarea id="new-notes" placeholder="Any notes..."></textarea>
+          <textarea id="new-notes" placeholder="Add any notes..."></textarea>
         </div>
       </div>
     </div>
@@ -1029,6 +1023,7 @@ CLIENT_ID: '218824403685-59nhvtfhovl0frpgob2til2hqan1mphm.apps.googleusercontent
 <!-- ── TOAST ── -->
 <div id="toast"></div>
 
+<script src="https://apis.google.com/js/api.js"></script>
 <script>
 // ════════════════════════════════════════════════════════
 // CONFIG — Replace CLIENT_ID with your Google OAuth Client ID
@@ -1094,195 +1089,206 @@ async function fetchUserInfo() {
   if (state.user.picture) {
     av.innerHTML = `<img src="${state.user.picture}" alt="">`;
   } else {
-    av.textContent = (state.user.name || 'U')[0].toUpperCase();
+    av.textContent = (state.user.name || state.user.email || 'U').charAt(0).toUpperCase();
   }
 }
 
 function signOut() {
-  if (state.token) google.accounts.oauth2.revoke(state.token);
   state.token = null;
   state.user = null;
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('login-screen').style.display = 'flex';
-}
-
-function showApp() {
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'flex';
+  document.getElementById('user-name').textContent = 'Loading...';
+  document.getElementById('user-avatar').textContent = 'SW';
+  hideApp();
 }
 
 // ════════════════════════════════════════════════════════
-// SHEETS API
+// UI
 // ════════════════════════════════════════════════════════
-async function sheetsGet(range) {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${encodeURIComponent(range)}`;
-  const r = await fetch(url, { headers: { Authorization: 'Bearer ' + state.token } });
-  if (!r.ok) throw new Error(await r.text());
-  const d = await r.json();
-  return d.values || [];
+function showApp() { document.getElementById('login-screen').style.display = 'none'; document.getElementById('app').style.display = 'flex'; }
+function hideApp() { document.getElementById('login-screen').style.display = 'flex'; document.getElementById('app').style.display = 'none'; }
+
+function switchTab(tab) {
+  state.currentTab = tab;
+  document.querySelectorAll('[id^="tab-"]').forEach(el => el.style.display = 'none');
+  document.getElementById('tab-' + tab).style.display = 'block';
+  document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+  event.target.classList.add('active');
+  
+  if (tab === 'preps') filterPreps();
+  else if (tab === 'tasks') filterTasks();
+  else if (tab === 'contacts') filterContacts();
 }
 
-async function sheetsAppend(range, values) {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED`;
-  const r = await fetch(url, {
-    method: 'POST',
-    headers: { Authorization: 'Bearer ' + state.token, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ values })
-  });
-  if (!r.ok) throw new Error(await r.text());
-  return r.json();
-}
+function openAddModal() { document.getElementById('add-modal').classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
-async function sheetsUpdate(range, values) {
-  const url = `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`;
-  const r = await fetch(url, {
-    method: 'PUT',
-    headers: { Authorization: 'Bearer ' + state.token, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ values })
-  });
-  if (!r.ok) throw new Error(await r.text());
-  return r.json();
+function showToast(msg, isError = false) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.className = isError ? 'show error' : 'show';
+  setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
 // ════════════════════════════════════════════════════════
-// LOAD DATA
+// DATA
 // ════════════════════════════════════════════════════════
 async function loadAllData() {
-  await Promise.all([loadPreps(), loadTasks(), loadContacts()]);
-}
-
-async function loadPreps() {
+  document.getElementById('preps-loading').style.display = 'block';
+  document.getElementById('tasks-loading').style.display = 'block';
+  document.getElementById('contacts-loading').style.display = 'block';
+  
   try {
-    const rows = await sheetsGet('PREPS!A:W');
-    if (rows.length < 2) { state.preps = []; renderPreps(); return; }
-    const headers = rows[0];
-    state.preps = rows.slice(1).map((r, i) => ({
-      _row: i + 2,
-      complete: r[0] || '',
-      projectId: r[1] || '',
-      status: r[2] || '',
-      client: r[3] || '',
-      showName: r[4] || '',
-      exhibitorName: r[5] || '',
-      prepStart: r[6] || '',
-      preview: r[7] || '',
-      shipAdv: r[8] || '',
-      shipDirect: r[9] || '',
-      city: r[10] || '',
-      moveIn: r[11] || '',
-      hallHours: r[12] || '',
-      moveOut: r[13] || '',
-      booth: r[14] || '',
-      notes: r[15] || '',
-      pm: r[16] || '',
-    }));
-
-    // Populate PM filter
-    const pms = [...new Set(state.preps.map(p => p.pm).filter(Boolean))].sort();
-    const pmSel = document.getElementById('filter-pm');
-    pmSel.innerHTML = '<option value="">All PMs</option>' + pms.map(p => `<option>${p}</option>`).join('');
-
-    // Populate PM dropdown in add form
-    const newPm = document.getElementById('new-pm');
-    newPm.innerHTML = '<option value="">— Select PM —</option>' + pms.map(p => `<option>${p}</option>`).join('');
-
-    // Populate City filter
-    const cities = [...new Set(state.preps.map(p => p.city).filter(Boolean))].sort();
-    const citySel = document.getElementById('filter-city');
-    citySel.innerHTML = '<option value="">All Cities</option>' + cities.map(c => `<option>${c}</option>`).join('');
-
+    const [preps, tasks, contacts] = await Promise.all([
+      fetchSheet(CONFIG.SHEETS.PREPS),
+      fetchSheet(CONFIG.SHEETS.TASKS),
+      fetchSheet(CONFIG.SHEETS.CONTACTS)
+    ]);
+    
+    state.preps = preps;
+    state.tasks = tasks;
+    state.contacts = contacts;
+    
     filterPreps();
-    updateStats();
-  } catch (e) {
-    showToast('Error loading PREPS: ' + e.message, true);
-    document.getElementById('preps-loading').innerHTML = '<p style="color:var(--red)">Failed to load. Check your API key and Sheet permissions.</p>';
-  }
-}
-
-async function loadTasks() {
-  try {
-    const rows = await sheetsGet('TASKS!A:P');
-    if (rows.length < 2) { state.tasks = []; renderTasks(); return; }
-    state.tasks = rows.slice(1).map((r, i) => ({
-      _row: i + 2,
-      projectId: r[0] || '',
-      taskId: r[1] || '',
-      status: r[2] || '',
-      description: r[3] || '',
-      files: r[4] || '',
-      eventCreator: r[5] || '',
-      notes: r[6] || '',
-      dueBy: r[7] || '',
-      photo: r[8] || '',
-      assignedTo: r[9] || '',
-      category: r[10] || '',
-      priority: r[11] || '',
-    }));
     filterTasks();
-  } catch (e) {
-    showToast('Error loading TASKS: ' + e.message, true);
-  }
-}
-
-async function loadContacts() {
-  try {
-    const rows = await sheetsGet('CONTACTS!A:F');
-    if (rows.length < 2) { state.contacts = []; renderContacts(); return; }
-    state.contacts = rows.slice(1).map(r => ({
-      id: r[0] || '',
-      firstName: r[1] || '',
-      lastName: r[2] || '',
-      position: r[3] || '',
-      phone: r[4] || '',
-      email: r[5] || ''
-    }));
     filterContacts();
+    
+    showToast('Data loaded successfully');
   } catch (e) {
-    showToast('Error loading CONTACTS: ' + e.message, true);
+    showToast('Error loading data: ' + e.message, true);
   }
 }
 
-// ════════════════════════════════════════════════════════
-// REFRESH
-// ════════════════════════════════════════════════════════
-async function refreshData() {
-  const icon = document.getElementById('refresh-icon');
-  icon.classList.add('spinning');
-  await loadAllData();
-  icon.classList.remove('spinning');
-  showToast('Data refreshed');
+async function fetchSheet(sheetName) {
+  const response = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.SHEET_ID}/values/${sheetName}?key=AIzaSyDaEBKgV2LXc8j8LoJZRp7iFMvWoIZXCY4`
+  );
+  const data = await response.json();
+  
+  if (!data.values || data.values.length < 2) return [];
+  
+  const headers = data.values[0];
+  return data.values.slice(1).map(row => {
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = row[i] || '');
+    return obj;
+  });
 }
 
-// ════════════════════════════════════════════════════════
-// STATS
-// ════════════════════════════════════════════════════════
-function updateStats() {
-  const p = state.preps;
-  document.getElementById('stat-total').textContent = p.length;
-  document.getElementById('stat-progress').textContent = p.filter(j => j.status === 'In Progress').length;
-  document.getElementById('stat-pending').textContent = p.filter(j => j.status === 'Pending').length;
-  document.getElementById('stat-complete').textContent = p.filter(j => j.status === 'Complete').length;
+async function addJob() {
+  const projectId = document.getElementById('new-project-id').value.trim();
+  if (!projectId) { showToast('Project ID is required', true); return; }
+  
+  const newJob = {
+    projectId,
+    status: document.getElementById('new-status').value,
+    client: document.getElementById('new-client').value,
+    showName: document.getElementById('new-show').value,
+    exhibitorName: document.getElementById('new-exhibitor').value,
+    city: document.getElementById('new-city').value,
+    pm: document.getElementById('new-pm').value,
+    prepStart: document.getElementById('new-prep-start').value,
+    shipAdv: document.getElementById('new-ship-adv').value,
+    notes: document.getElementById('new-notes').value
+  };
+  
+  state.preps.push(newJob);
+  closeModal('add-modal');
+  document.getElementById('add-modal').querySelectorAll('input, select, textarea').forEach(el => el.value = '');
+  filterPreps();
+  showToast('Job added successfully');
 }
 
-// ════════════════════════════════════════════════════════
-// FILTER + SORT
-// ════════════════════════════════════════════════════════
 function filterPreps() {
-  const q = document.getElementById('search-input').value.toLowerCase();
-  const st = document.getElementById('filter-status').value;
+  const search = document.getElementById('search-input').value.toLowerCase();
+  const status = document.getElementById('filter-status').value;
   const pm = document.getElementById('filter-pm').value;
   const city = document.getElementById('filter-city').value;
-
-  state.filteredPreps = state.preps.filter(j => {
-    const matchQ = !q || [j.projectId, j.client, j.showName, j.exhibitorName, j.city, j.pm].join(' ').toLowerCase().includes(q);
-    const matchSt = !st || j.status === st;
-    const matchPm = !pm || j.pm === pm;
-    const matchCity = !city || j.city === city;
-    return matchQ && matchSt && matchPm && matchCity;
+  
+  state.filteredPreps = state.preps.filter(p => {
+    const matchSearch = !search || 
+      (p.projectId && p.projectId.toLowerCase().includes(search)) ||
+      (p.client && p.client.toLowerCase().includes(search)) ||
+      (p.showName && p.showName.toLowerCase().includes(search));
+    
+    const matchStatus = !status || p.status === status;
+    const matchPm = !pm || p.pm === pm;
+    const matchCity = !city || p.city === city;
+    
+    return matchSearch && matchStatus && matchPm && matchCity;
   });
+  
+  renderPrepsTable();
+  updatePMFilter();
+  updateCityFilter();
+  updateStats();
+}
 
-  sortPreps();
-  renderPreps();
+function renderPrepsTable() {
+  const tbody = document.getElementById('preps-tbody');
+  const empty = document.getElementById('preps-empty');
+  const table = document.getElementById('preps-table');
+  
+  if (state.filteredPreps.length === 0) {
+    tbody.innerHTML = '';
+    table.style.display = 'none';
+    empty.style.display = 'block';
+    document.getElementById('preps-loading').style.display = 'none';
+    return;
+  }
+  
+  const sorted = [...state.filteredPreps].sort((a, b) => {
+    const aVal = a[state.sortKey] || '';
+    const bVal = b[state.sortKey] || '';
+    return aVal < bVal ? -state.sortDir : state.sortDir;
+  });
+  
+  tbody.innerHTML = sorted.map(p => `
+    <tr onclick="showDetail('${p.projectId}')">
+      <td class="project-id">#${p.projectId}</td>
+      <td><span class="badge badge-${p.status === 'Complete' ? 'complete' : p.status === 'In Progress' ? 'progress' : 'pending'}">${p.status || '—'}</span></td>
+      <td class="client">${p.client || '—'}</td>
+      <td class="show">${p.showName || '—'}</td>
+      <td>${p.exhibitorName || '—'}</td>
+      <td>${p.city || '—'}</td>
+      <td>${p.pm || '—'}</td>
+      <td>${p.prepStart || '—'}</td>
+      <td>${p.shipAdv || '—'}</td>
+      <td>${p.notes ? p.notes.substring(0, 20) + '...' : '—'}</td>
+      <td><button class="btn-secondary" onclick="event.stopPropagation(); editJob('${p.projectId}')">Edit</button></td>
+    </tr>
+  `).join('');
+  
+  empty.style.display = 'none';
+  table.style.display = 'table';
+  document.getElementById('preps-loading').style.display = 'none';
+}
+
+function updateStats() {
+  const total = state.preps.length;
+  const progress = state.preps.filter(p => p.status === 'In Progress').length;
+  const pending = state.preps.filter(p => p.status === 'Pending').length;
+  const complete = state.preps.filter(p => p.status === 'Complete').length;
+  
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-progress').textContent = progress;
+  document.getElementById('stat-pending').textContent = pending;
+  document.getElementById('stat-complete').textContent = complete;
+}
+
+function updatePMFilter() {
+  const pms = [...new Set(state.preps.map(p => p.pm).filter(Boolean))].sort();
+  const select = document.getElementById('filter-pm');
+  const current = select.value;
+  select.innerHTML = '<option value="">All PMs</option>' + pms.map(pm => `<option>${pm}</option>`).join('');
+  select.value = current;
+}
+
+function updateCityFilter() {
+  const cities = [...new Set(state.preps.map(p => p.city).filter(Boolean))].sort();
+  const select = document.getElementById('filter-city');
+  const current = select.value;
+  select.innerHTML = '<option value="">All Cities</option>' + cities.map(c => `<option>${c}</option>`).join('');
+  select.value = current;
 }
 
 function sortBy(key) {
@@ -1291,346 +1297,157 @@ function sortBy(key) {
   filterPreps();
 }
 
-function sortPreps() {
-  const k = state.sortKey, d = state.sortDir;
-  state.filteredPreps.sort((a, b) => {
-    const av = (a[k] || '').toLowerCase();
-    const bv = (b[k] || '').toLowerCase();
-    return av < bv ? -d : av > bv ? d : 0;
-  });
-}
-
-function filterTasks() {
-  const q = document.getElementById('task-search').value.toLowerCase();
-  const st = document.getElementById('filter-task-status').value;
-  const pr = document.getElementById('filter-task-priority').value;
-
-  state.filteredTasks = state.tasks.filter(t => {
-    const matchQ = !q || [t.projectId, t.taskId, t.description, t.assignedTo].join(' ').toLowerCase().includes(q);
-    const matchSt = !st || t.status === st;
-    const matchPr = !pr || t.priority === pr;
-    return matchQ && matchSt && matchPr;
-  });
-
-  renderTasks();
-}
-
-function filterContacts() {
-  const q = document.getElementById('contact-search').value.toLowerCase();
-  state.filteredContacts = state.contacts.filter(c =>
-    !q || [c.firstName, c.lastName, c.position, c.email].join(' ').toLowerCase().includes(q)
-  );
-  renderContacts();
-}
-
-// ════════════════════════════════════════════════════════
-// RENDER — PREPS
-// ════════════════════════════════════════════════════════
-function statusBadge(s) {
-  const map = { 'Pending': 'badge-pending', 'In Progress': 'badge-progress', 'Complete': 'badge-complete' };
-  return `<span class="badge ${map[s] || 'badge-default'}">${s || '—'}</span>`;
-}
-
-function renderPreps() {
-  const loading = document.getElementById('preps-loading');
-  const table = document.getElementById('preps-table');
-  const empty = document.getElementById('preps-empty');
-  const tbody = document.getElementById('preps-tbody');
-
-  loading.style.display = 'none';
-
-  if (state.filteredPreps.length === 0) {
-    table.style.display = 'none';
-    empty.style.display = 'block';
-    return;
-  }
-
-  empty.style.display = 'none';
-  table.style.display = 'table';
-
-  tbody.innerHTML = state.filteredPreps.map(j => `
-    <tr onclick="openDetail('${j.projectId}')">
-      <td class="project-id">${j.projectId}</td>
-      <td>${statusBadge(j.status)}</td>
-      <td class="client">${j.client || '—'}</td>
-      <td class="show">${j.showName || '—'}</td>
-      <td>${j.exhibitorName || '—'}</td>
-      <td>${j.city || '—'}</td>
-      <td>${j.pm || '—'}</td>
-      <td>${j.prepStart || '—'}</td>
-      <td>${j.shipAdv || '—'}</td>
-      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;color:var(--text-muted);font-size:0.78rem">${(j.notes || '').substring(0,60)}${j.notes && j.notes.length > 60 ? '…' : ''}</td>
-      <td onclick="event.stopPropagation()">
-        <select class="status-select" onchange="updateStatus('${j._row}', this.value)">
-          <option ${j.status==='Pending'?'selected':''}>Pending</option>
-          <option ${j.status==='In Progress'?'selected':''}>In Progress</option>
-          <option ${j.status==='Complete'?'selected':''}>Complete</option>
-        </select>
-      </td>
-    </tr>
-  `).join('');
-}
-
-// ════════════════════════════════════════════════════════
-// RENDER — TASKS
-// ════════════════════════════════════════════════════════
-function priorityClass(p) {
-  if (p === 'HIGH') return 'priority-high';
-  if (p === 'MODERATE') return 'priority-moderate';
-  return 'priority-low';
-}
-
-function renderTasks() {
-  const loading = document.getElementById('tasks-loading');
-  const table = document.getElementById('tasks-table');
-  const empty = document.getElementById('tasks-empty');
-  const tbody = document.getElementById('tasks-tbody');
-
-  loading.style.display = 'none';
-
-  if (state.filteredTasks.length === 0) {
-    table.style.display = 'none';
-    empty.style.display = 'block';
-    return;
-  }
-
-  empty.style.display = 'none';
-  table.style.display = 'table';
-
-  tbody.innerHTML = state.filteredTasks.map(t => `
-    <tr class="task-row">
-      <td style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted)">${t.taskId || '—'}</td>
-      <td class="project-id">${t.projectId}</td>
-      <td>${t.description || '—'}</td>
-      <td>${t.assignedTo || '—'}</td>
-      <td>${t.dueBy || '—'}</td>
-      <td><span class="${priorityClass(t.priority)}">${t.priority || '—'}</span></td>
-      <td>${statusBadge(t.status)}</td>
-      <td style="color:var(--text-muted);font-size:0.78rem">${t.category || '—'}</td>
-    </tr>
-  `).join('');
-}
-
-// ════════════════════════════════════════════════════════
-// RENDER — CONTACTS
-// ════════════════════════════════════════════════════════
-function renderContacts() {
-  const loading = document.getElementById('contacts-loading');
-  const grid = document.getElementById('contacts-grid');
-  const empty = document.getElementById('contacts-empty');
-
-  loading.style.display = 'none';
-
-  if (state.filteredContacts.length === 0) {
-    grid.style.display = 'none';
-    empty.style.display = 'block';
-    return;
-  }
-
-  empty.style.display = 'none';
-  grid.style.display = 'grid';
-
-  grid.innerHTML = state.filteredContacts.map(c => `
-    <div class="contact-card">
-      <div class="contact-avatar">${(c.firstName[0] || '') + (c.lastName[0] || '')}</div>
-      <div>
-        <div class="contact-name">${c.firstName} ${c.lastName}</div>
-        <div class="contact-role">${c.position}</div>
-        ${c.phone ? `<div class="contact-detail">${c.phone}</div>` : ''}
-        ${c.email ? `<div class="contact-detail">${c.email}</div>` : ''}
-      </div>
-    </div>
-  `).join('');
-}
-
-// ════════════════════════════════════════════════════════
-// JOB DETAIL MODAL
-// ════════════════════════════════════════════════════════
-function openDetail(projectId) {
-  const j = state.preps.find(p => p.projectId === projectId);
-  if (!j) return;
-
-  const relatedTasks = state.tasks.filter(t => t.projectId === projectId);
-
-  document.getElementById('detail-title').textContent = `Job ${j.projectId}`;
-
-  const tasksHtml = relatedTasks.length === 0 ? '<p style="color:var(--text-dim);font-size:0.82rem">No tasks linked to this job.</p>' :
-    relatedTasks.map(t => `
-      <div class="task-item">
-        <div class="task-dot" style="background:${t.status==='Completed'?'var(--green)':'var(--blue)'}"></div>
-        <div class="task-info">
-          <div class="task-desc">${t.description}</div>
-          <div class="task-meta">${t.taskId} · ${t.assignedTo || '—'} · Due: ${t.dueBy || '—'} · <span class="${priorityClass(t.priority)}">${t.priority}</span></div>
-        </div>
-      </div>
-    `).join('');
-
-  document.getElementById('detail-body').innerHTML = `
+function showDetail(projectId) {
+  const job = state.preps.find(p => p.projectId === projectId);
+  if (!job) return;
+  
+  const body = document.getElementById('detail-body');
+  body.innerHTML = `
     <div class="detail-grid">
       <div class="detail-field">
         <div class="detail-label">Project ID</div>
-        <div class="detail-value mono">${j.projectId}</div>
+        <div class="detail-value mono">#${job.projectId}</div>
       </div>
       <div class="detail-field">
         <div class="detail-label">Status</div>
-        <div class="detail-value">${statusBadge(j.status)}</div>
+        <div class="detail-value"><span class="badge badge-${job.status === 'Complete' ? 'complete' : job.status === 'In Progress' ? 'progress' : 'pending'}">${job.status || '—'}</span></div>
       </div>
       <div class="detail-field">
         <div class="detail-label">Client</div>
-        <div class="detail-value">${j.client || '—'}</div>
+        <div class="detail-value">${job.client || '—'}</div>
       </div>
       <div class="detail-field">
-        <div class="detail-label">Show Name</div>
-        <div class="detail-value">${j.showName || '—'}</div>
+        <div class="detail-label">Show</div>
+        <div class="detail-value">${job.showName || '—'}</div>
       </div>
       <div class="detail-field">
         <div class="detail-label">Exhibitor</div>
-        <div class="detail-value">${j.exhibitorName || '—'}</div>
+        <div class="detail-value">${job.exhibitorName || '—'}</div>
       </div>
       <div class="detail-field">
         <div class="detail-label">City</div>
-        <div class="detail-value">${j.city || '—'}</div>
+        <div class="detail-value">${job.city || '—'}</div>
       </div>
       <div class="detail-field">
         <div class="detail-label">Project Manager</div>
-        <div class="detail-value">${j.pm || '—'}</div>
-      </div>
-      <div class="detail-field">
-        <div class="detail-label">Booth</div>
-        <div class="detail-value">${j.booth || '—'}</div>
+        <div class="detail-value">${job.pm || '—'}</div>
       </div>
       <div class="detail-field">
         <div class="detail-label">Prep Start</div>
-        <div class="detail-value">${j.prepStart || '—'}</div>
-      </div>
-      <div class="detail-field">
-        <div class="detail-label">Preview Date</div>
-        <div class="detail-value">${j.preview || '—'}</div>
+        <div class="detail-value">${job.prepStart || '—'}</div>
       </div>
       <div class="detail-field">
         <div class="detail-label">Ship Advanced</div>
-        <div class="detail-value">${j.shipAdv || '—'}</div>
+        <div class="detail-value">${job.shipAdv || '—'}</div>
       </div>
-      <div class="detail-field">
-        <div class="detail-label">Ship Direct</div>
-        <div class="detail-value">${j.shipDirect || '—'}</div>
-      </div>
+      ${job.notes ? `<div class="detail-field" style="grid-column: 1 / -1;">
+        <div class="detail-label">Notes</div>
+        <div class="detail-value">${job.notes}</div>
+      </div>` : ''}
     </div>
-
-    ${j.notes ? `
-    <div class="detail-section-title">Notes</div>
-    <p style="font-size:0.83rem;color:var(--text-muted);line-height:1.6">${j.notes}</p>
-    ` : ''}
-
-    ${j.moveIn || j.hallHours || j.moveOut ? `
-    <div class="detail-section-title">Show Schedule</div>
-    <div class="detail-grid">
-      <div class="detail-field">
-        <div class="detail-label">Exhibitor Move-In</div>
-        <div class="detail-value" style="white-space:pre-wrap;font-size:0.78rem">${j.moveIn || '—'}</div>
-      </div>
-      <div class="detail-field">
-        <div class="detail-label">Hall Hours</div>
-        <div class="detail-value" style="white-space:pre-wrap;font-size:0.78rem">${j.hallHours || '—'}</div>
-      </div>
-      <div class="detail-field">
-        <div class="detail-label">Move-Out</div>
-        <div class="detail-value" style="white-space:pre-wrap;font-size:0.78rem">${j.moveOut || '—'}</div>
-      </div>
-    </div>
-    ` : ''}
-
-    <div class="detail-section-title">Tasks (${relatedTasks.length})</div>
-    ${tasksHtml}
   `;
-
+  
+  document.getElementById('detail-title').textContent = `Job #${job.projectId} - ${job.showName || 'Detail'}`;
   document.getElementById('detail-modal').classList.add('open');
 }
 
-// ════════════════════════════════════════════════════════
-// ADD JOB
-// ════════════════════════════════════════════════════════
-function openAddModal() {
-  document.getElementById('add-modal').classList.add('open');
+function editJob(projectId) {
+  showToast('Edit feature coming soon');
 }
 
-async function addJob() {
-  const projectId = document.getElementById('new-project-id').value.trim();
-  if (!projectId) { showToast('Project ID is required', true); return; }
-
-  const row = [
-    'FALSE',
-    projectId,
-    document.getElementById('new-status').value,
-    document.getElementById('new-client').value,
-    document.getElementById('new-show').value,
-    document.getElementById('new-exhibitor').value,
-    document.getElementById('new-prep-start').value,
-    '',
-    document.getElementById('new-ship-adv').value,
-    document.getElementById('new-ship-direct').value,
-    document.getElementById('new-city').value,
-    '', '', '',
-    '',
-    document.getElementById('new-notes').value,
-    document.getElementById('new-pm').value,
-  ];
-
-  try {
-    await sheetsAppend('PREPS!A:Q', [row]);
-    closeModal('add-modal');
-    showToast('Job added successfully');
-    await loadPreps();
-  } catch (e) {
-    showToast('Failed to add job: ' + e.message, true);
-  }
-}
-
-// ════════════════════════════════════════════════════════
-// UPDATE STATUS
-// ════════════════════════════════════════════════════════
-async function updateStatus(row, newStatus) {
-  try {
-    await sheetsUpdate(`PREPS!C${row}`, [[newStatus]]);
-    const job = state.preps.find(j => j._row === row);
-    if (job) { job.status = newStatus; updateStats(); }
-    showToast('Status updated to: ' + newStatus);
-  } catch (e) {
-    showToast('Failed to update status: ' + e.message, true);
-  }
-}
-
-// ════════════════════════════════════════════════════════
-// UI UTILS
-// ════════════════════════════════════════════════════════
-function switchTab(tab) {
-  state.currentTab = tab;
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  event.target.classList.add('active');
-  ['preps','tasks','contacts'].forEach(t => {
-    document.getElementById('tab-' + t).style.display = t === tab ? 'block' : 'none';
+function filterTasks() {
+  const search = document.getElementById('task-search').value.toLowerCase();
+  const status = document.getElementById('filter-task-status').value;
+  const priority = document.getElementById('filter-task-priority').value;
+  
+  state.filteredTasks = state.tasks.filter(t => {
+    const matchSearch = !search || (t.description && t.description.toLowerCase().includes(search));
+    const matchStatus = !status || t.status === status;
+    const matchPriority = !priority || t.priority === priority;
+    return matchSearch && matchStatus && matchPriority;
   });
+  
+  renderTasksTable();
 }
 
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function renderTasksTable() {
+  const tbody = document.getElementById('tasks-tbody');
+  const empty = document.getElementById('tasks-empty');
+  const table = document.getElementById('tasks-table');
+  
+  if (state.filteredTasks.length === 0) {
+    tbody.innerHTML = '';
+    table.style.display = 'none';
+    empty.style.display = 'block';
+    document.getElementById('tasks-loading').style.display = 'none';
+    return;
+  }
+  
+  tbody.innerHTML = state.filteredTasks.map(t => `
+    <tr class="task-row">
+      <td class="project-id">${t.taskId || '—'}</td>
+      <td>${t.projectId || '—'}</td>
+      <td>${t.description || '—'}</td>
+      <td>${t.assignedTo || '—'}</td>
+      <td>${t.dueBy || '—'}</td>
+      <td><span class="priority-${(t.priority || 'low').toLowerCase()}">${t.priority || '—'}</span></td>
+      <td><span class="badge badge-${t.status === 'Completed' ? 'complete' : 'progress'}">${t.status || '—'}</span></td>
+      <td>${t.category || '—'}</td>
+    </tr>
+  `).join('');
+  
+  empty.style.display = 'none';
+  table.style.display = 'table';
+  document.getElementById('tasks-loading').style.display = 'none';
+}
 
-document.querySelectorAll('.modal-overlay').forEach(m => {
-  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
-});
+function filterContacts() {
+  const search = document.getElementById('contact-search').value.toLowerCase();
+  
+  state.filteredContacts = state.contacts.filter(c => {
+    const matchSearch = !search || 
+      (c.name && c.name.toLowerCase().includes(search)) ||
+      (c.email && c.email.toLowerCase().includes(search)) ||
+      (c.phone && c.phone.toLowerCase().includes(search));
+    return matchSearch;
+  });
+  
+  renderContactsGrid();
+}
 
-let toastTimer;
-function showToast(msg, isError = false) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'show' + (isError ? ' error' : '');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { t.className = ''; }, 3000);
+function renderContactsGrid() {
+  const grid = document.getElementById('contacts-grid');
+  const empty = document.getElementById('contacts-empty');
+  
+  if (state.filteredContacts.length === 0) {
+    grid.innerHTML = '';
+    grid.style.display = 'none';
+    empty.style.display = 'block';
+    document.getElementById('contacts-loading').style.display = 'none';
+    return;
+  }
+  
+  grid.innerHTML = state.filteredContacts.map(c => `
+    <div class="contact-card">
+      <div class="contact-avatar">${(c.name || 'C').charAt(0).toUpperCase()}</div>
+      <div style="flex: 1;">
+        <div class="contact-name">${c.name || '—'}</div>
+        <div class="contact-role">${c.role || '—'}</div>
+        <div class="contact-detail">${c.email || c.phone || '—'}</div>
+      </div>
+    </div>
+  `).join('');
+  
+  empty.style.display = 'none';
+  grid.style.display = 'grid';
+  document.getElementById('contacts-loading').style.display = 'none';
+}
+
+function refreshData() {
+  document.getElementById('refresh-icon').classList.add('spinning');
+  loadAllData();
+  setTimeout(() => document.getElementById('refresh-icon').classList.remove('spinning'), 1000);
 }
 </script>
-
-<!-- Google Identity Services -->
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-
 </body>
 </html>
