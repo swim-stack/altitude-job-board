@@ -1,8 +1,4 @@
-# Altitude Exhibits — Job Board
 
-A modern, responsive job management dashboard for Altitude Exhibits. Track exhibition prep work, manage tasks, and maintain contact information in one centralized platform.
-
-**Live Demo:** https://altitude-job-board.vercel.app
 
 ---
 
@@ -175,9 +171,7 @@ This is a static HTML file, so it can be deployed to:
 
 ---
 
-## License
 
-This project is proprietary to Altitude Exhibits.
 
 ---
 
